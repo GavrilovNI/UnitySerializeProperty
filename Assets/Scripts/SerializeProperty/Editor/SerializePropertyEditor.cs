@@ -7,9 +7,9 @@ using System.Linq;
 
 namespace SerializePropertyEditing
 {
-    public class MemberInfoByNameComparer : IEqualityComparer<MemberInfo>
+    public class PropertyInfoByNameComparer : IEqualityComparer<PropertyInfo>
     {
-        public bool Equals(MemberInfo a, MemberInfo b)
+        public bool Equals(PropertyInfo a, PropertyInfo b)
         {
             if(object.ReferenceEquals(a, b))
                 return true;
@@ -23,7 +23,7 @@ namespace SerializePropertyEditing
             return a.Name == b.Name;
         }
 
-        public int GetHashCode(MemberInfo propertyInfo)
+        public int GetHashCode(PropertyInfo propertyInfo)
         {
             if(propertyInfo is null)
                 return String.Empty.GetHashCode();
@@ -33,64 +33,49 @@ namespace SerializePropertyEditing
 
     public class SerializePropertyEditor : Editor
     {
-        private MonoBehaviour _target;
         private Type _type;
-        private List<MemberInfo> _fieldsAndProperties = new List<MemberInfo>();
+        private List<PropertyInfo> _properties;
 
-        private void OnEnable()
+        private void Initialize()
         {
             _type = target.GetType();
-            _target = (MonoBehaviour)target;
-            _fieldsAndProperties = GetFieldsAndProperties(_type);
+            _properties = GetProperties(_type);
+        }
+        private void Awake()
+        {
+            Initialize();
+        }
+        private void OnEnable()
+        {
+            Initialize();
         }
 
-        public static List<MemberInfo> GetFieldsAndProperties(Type type)
+        public static List<PropertyInfo> GetProperties(Type type)
         {
             BindingFlags instanceFieldsAndProperties = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
-            var monoBehaviorMembers = typeof(MonoBehaviour).GetMembers(instanceFieldsAndProperties);
+            var monoBehaviorMembers = typeof(MonoBehaviour).GetProperties(instanceFieldsAndProperties);
 
-            MemberInfoByNameComparer comparer = new MemberInfoByNameComparer();
-            var localMembers = type.GetMembers(instanceFieldsAndProperties | BindingFlags.DeclaredOnly).ToList();
-            var parentMembers = type.GetMembers(instanceFieldsAndProperties)
+            PropertyInfoByNameComparer comparer = new PropertyInfoByNameComparer();
+            var localMembers = type.GetProperties(instanceFieldsAndProperties | BindingFlags.DeclaredOnly).ToList();
+            var parentMembers = type.GetProperties(instanceFieldsAndProperties)
                                        .Except(monoBehaviorMembers, comparer)
                                        .Except(localMembers, comparer)
                                        .ToList();
 
-            foreach(var local in localMembers)
-            {
-                if(local is FieldInfo || local is PropertyInfo)
-                    Debug.Log(local.Name);
-            }
-
             var allProperties = parentMembers.Concat(localMembers);
 
-            List<MemberInfo> result = new List<MemberInfo>();
+            List<PropertyInfo> result = new List<PropertyInfo>();
 
-            foreach(var memberInfo in allProperties)
+            foreach(var propertyInfo in allProperties)
             {
-                if(memberInfo is FieldInfo fieldInfo)
-                {
-                    if(IsFieldSerializable(fieldInfo))
-                        result.Add(memberInfo);
-                }
-                else if(memberInfo is PropertyInfo propertyInfo)
-                {
-                    if(IsGetterSerializable(propertyInfo))
-                        result.Add(propertyInfo);
-                }
+                if(IsGetterSerializable(propertyInfo))
+                    result.Add(propertyInfo);
             }
 
             return result;
         }
 
-        public static bool IsFieldSerializable(FieldInfo fieldInfo)
-        {
-            return fieldInfo != null &&
-                   Attribute.IsDefined(fieldInfo, typeof(System.NonSerializedAttribute)) == false &&
-                   (fieldInfo.IsPrivate == false ||
-                   Attribute.IsDefined(fieldInfo, typeof(SerializeField)));
-        }
         public static bool IsGetterSerializable(PropertyInfo propertyInfo)
         {
             return propertyInfo.GetMethod != null &&
@@ -163,19 +148,30 @@ namespace SerializePropertyEditing
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
-            foreach(var memberInfo in _fieldsAndProperties)
+            if(GUILayout.Button("Reset Properties"))
+                ResetProperties();
+            DrawDefaultInspector();
+            foreach(var propertyInfo in _properties)
             {
-                if(memberInfo is FieldInfo)
-                {
-                    SerializedProperty property = serializedObject.FindProperty(memberInfo.Name);
-                    EditorGUILayout.PropertyField(property);
-                }
-                else
-                {
-                    DrawProperty(target, memberInfo as PropertyInfo);
-                }
+                DrawProperty(target, propertyInfo);
             }
             serializedObject.ApplyModifiedProperties();
+        }
+
+        public void ResetProperties()
+        {
+            if(_type is null)
+                return;
+            object defaultInstance = Activator.CreateInstance(_type);
+            Debug.Log("That's Ok to create a MonoBehaviour using 'new' word. It's needed for reseting properties.");
+            foreach(var propertyInfo in _properties)
+            {
+                if(propertyInfo.SetMethod != null && propertyInfo.GetMethod != null)
+                {
+                    object defaultValue = propertyInfo.GetValue(defaultInstance);
+                    propertyInfo.SetValue(target, defaultValue);
+                }
+            }
         }
     }
 }

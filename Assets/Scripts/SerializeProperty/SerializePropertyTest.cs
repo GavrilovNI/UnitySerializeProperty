@@ -82,6 +82,8 @@ namespace SerializePropertyEditing
             }
         }
 
+        public int DefaultIs51 { get; set; } = 51;
+
         public Vector2 Vector2 { get; set; }
     }
 }
