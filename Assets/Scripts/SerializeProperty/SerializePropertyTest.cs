@@ -1,72 +1,84 @@
 using UnityEngine;
 
-namespace SerializePropertyEditing
+namespace SerializePropertyEditing.Test
 {
     public class SerializePropertyTest : MonoBehaviour
     {
         public int PublicField;
         private int _privateField;
-        [SerializeField] private int _privateFieldWithAttribute;
+        [SerializeField] private int _privateFieldWithSerializeFieldAttribute;
+        [System.NonSerialized] public int PublicFieldWithNonSerializedNonAttribute;
 
-        [NotSerializeProperty] public int PublicWithNotSerializePropertyAttribute { get; set; }
-        [NotSerializeGetter] public int PublicWithNotSerializeGetterAttribute { get; set; }
-        [NotSerializeSetter] public int PublicWithNotSerializeSetterAttribute { get; set; }
-
-        public int Public { get; set; }
-        public int PublicWithPrivateGetter { private get; set; }
-        public int PublicWithPrivateSetter { get; private set; }
-
-        public int PublicGetterOnly { get => Public; }
-        public int PublicSetterOnly { set => Public = value; }
-
-        [SerializeProperty] public int PublicWithPrivateGetterWithAttribute { private get; set; }
-        [SerializeGetter] public int PublicWithPrivateGetterWithGetterAttribute { private get; set; }
-        [SerializeSetter] public int PublicWithPrivateGetterWithSetterAttribute { private get; set; }
-
-        [SerializeProperty] public int PublicWithPrivateSetterWithAttribute { get; private set; }
-        [SerializeGetter] public int PublicWithPrivateSetterWithGetterAttribute { get; private set; }
-        [SerializeSetter] public int PublicWithPrivateSetterWithSetterAttribute { get; private set; }
-
-
-        [SerializeProperty] public int PublicWithProtectedGetterWithAttribute { protected get; set; }
-        [SerializeGetter] public int PublicWithProtectedGetterWithGetterAttribute { protected get; set; }
-        [SerializeSetter] public int PublicWithProtectedGetterWithSetterAttribute { protected get; set; }
-
-        [SerializeProperty] public int PublicWithProtectedSetterWithAttribute { get; protected set; }
-        [SerializeGetter] public int PublicWithProtectedSetterWithGetterAttribute { get; protected set; }
-        [SerializeSetter] public int PublicWithProtectedSetterWithSetterAttribute { get; protected set; }
-
-
-        private int Private { get; set; }
-        [SerializeProperty] private int PrivateWithAttribute { get; set; }
-        [SerializeGetter] private int PrivateWithGetterAttribute { get; set; }
-        [SerializeSetter] private int PrivateWithSetterAttribute { get; set; }
-
-        private int PrivateGetterOnly { get => Public; }
-        [SerializeProperty] private int PrivateGetterOnlyWithAttribute { get => Public; }
-        [SerializeGetter] private int PrivateGetterOnlyWithGetterAttribute { get => Public; }
-        [SerializeSetter] private int PrivateGetterOnlyWithSetterAttribute { get => Public; }
-
-        private int PrivateSetterOnly { set => Public = value; }
-        [SerializeProperty] private int PrivateSetterOnlyWithAttribute { set => Public = value; }
-        [SerializeGetter] private int PrivateSetterOnlyWithGetterAttribute { set => Public = value; }
-        [SerializeSetter] private int PrivateSetterOnlyWithSetterAttribute { set => Public = value; }
-
-
+        public int Public       { get; set; }
         protected int Protected { get; set; }
-        [SerializeProperty] protected int ProtectedWithAttribute { get; set; }
-        [SerializeGetter] protected int ProtectedWithGetterAttribute { get; set; }
-        [SerializeSetter] protected int ProtectedWithSetterAttribute { get; set; }
+        private int Private     { get; set; }
+        public int PublicPrivateGetter       { private get; set; }
+        public int PublicPrivateSetter       { get; private set; }
+        public int PublicProtectedGetter     { protected get; set; }
+        public int PublicProtectedSetter     { get; protected set; }
+        protected int ProtectedPrivateGetter { private get; set; }
+        protected int ProtectedPrivateSetter { get; private set; }
 
+        public int    PublicGetterOnly    { get => Public; }
+        public int    PublicSetterOnly    { set => Public = value; }
         protected int ProtectedGetterOnly { get => Public; }
-        [SerializeProperty] protected int ProtectedGetterOnlyWithAttribute { get => Public; }
-        [SerializeGetter] protected int ProtectedGetterOnlyWithGetterAttribute { get => Public; }
-        [SerializeSetter] protected int ProtectedGetterOnlyWithSetterAttribute { get => Public; }
-
         protected int ProtectedSetterOnly { set => Public = value; }
-        [SerializeProperty] protected int ProtectedSetterOnlyWithAttribute { set => Public = value; }
-        [SerializeGetter] protected int ProtectedSetterOnlyWithGetterAttribute { set => Public = value; }
-        [SerializeSetter] protected int ProtectedSetterOnlyWithSetterAttribute { set => Public = value; }
+        private int   PrivateGetterOnly   { get => Public; }
+        private int   PrivateSetterOnly   { set => Public = value; }
+
+        [SerializeProperty]               public int PublicAttribute           { get; set; }
+        [SerializeProperty(true, true)]   public int PublicAttributeTrueTrue   { get; set; }
+        [SerializeProperty(false, true)]  public int PublicAttributeFalseTrue  { get; set; }
+        [SerializeProperty(true, false)]  public int PublicAttributeTrueFalse  { get; set; }
+        [SerializeProperty(false, false)] public int PublicAttributeFalseFalse { get; set; }
+
+        [SerializeProperty]               public int PublicProtectedSetterAttribute           { get; protected set; }
+        [SerializeProperty(true, true)]   public int PublicProtectedSetterAttributeTrueTrue   { get; protected set; }
+        [SerializeProperty(false, true)]  public int PublicProtectedSetterAttributeFalseTrue  { get; protected set; }
+        [SerializeProperty(true, false)]  public int PublicProtectedeSetterAttributeTrueFalse { get; protected set; }
+        [SerializeProperty(false, false)] public int PublicProtectedSetterAttributeFalseFalse { get; protected set; }
+
+        [SerializeProperty]               public int PublicProtectedGetterAttribute           { protected get; set; }
+        [SerializeProperty(true, true)]   public int PublicProtectedGetterAttributeTrueTrue   { protected get; set; }
+        [SerializeProperty(false, true)]  public int PublicProtectedGetterAttributeFalseTrue  { protected get; set; }
+        [SerializeProperty(true, false)]  public int PublicProtectedGetterAttributeTrueFalse  { protected get; set; }
+        [SerializeProperty(false, false)] public int PublicProtectedGetterAttributeFalseFalse { protected get; set; }
+
+        [SerializeProperty]               public int PublicPrivateSetterAttribute           { get; private set; }
+        [SerializeProperty(true, true)]   public int PublicPrivateSetterAttributeTrueTrue   { get; private set; }
+        [SerializeProperty(false, true)]  public int PublicPrivateSetterAttributeFalseTrue  { get; private set; }
+        [SerializeProperty(true, false)]  public int PublicPrivateSetterAttributeTrueFalse  { get; private set; }
+        [SerializeProperty(false, false)] public int PublicPrivateSetterAttributeFalseFalse { get; private set; }
+
+        [SerializeProperty]               public int PublicPrivateGetterAttribute           { private get; set; }
+        [SerializeProperty(true, true)]   public int PublicPrivateGetterAttributeTrueTrue   { private get; set; }
+        [SerializeProperty(false, true)]  public int PublicPrivateGetterAttributeFalseTrue  { private get; set; }
+        [SerializeProperty(true, false)]  public int PublicPrivateGetterAttributeTrueFalse  { private get; set; }
+        [SerializeProperty(false, false)] public int PublicPrivateGetterAttributeFalseFalse { private get; set; }
+
+        [SerializeProperty]               protected int ProtectedAttribute           { get; set; }
+        [SerializeProperty(true, true)]   protected int ProtectedAttributeTrueTrue   { get; set; }
+        [SerializeProperty(false, true)]  protected int ProtectedAttributeFalseTrue  { get; set; }
+        [SerializeProperty(true, false)]  protected int ProtectedAttributeTrueFalse  { get; set; }
+        [SerializeProperty(false, false)] protected int ProtectedAttributeFalseFalse { get; set; }
+
+        [SerializeProperty]               protected int ProtectedPrivateSetterAttribute           { get; private set; }
+        [SerializeProperty(true, true)]   protected int ProtectedPrivateSetterAttributeTrueTrue   { get; private set; }
+        [SerializeProperty(false, true)]  protected int ProtectedPrivateSetterAttributeFalseTrue  { get; private set; }
+        [SerializeProperty(true, false)]  protected int ProtectedPrivateSetterAttributeTrueFalse  { get; private set; }
+        [SerializeProperty(false, false)] protected int ProtectedPrivateSetterAttributeFalseFalse { get; private set; }
+
+        [SerializeProperty]               protected int ProtectedPrivateGetterAttribute           { private get; set; }
+        [SerializeProperty(true, true)]   protected int ProtectedPrivateGetterAttributeTrueTrue   { private get; set; }
+        [SerializeProperty(false, true)]  protected int ProtectedPrivateGetterAttributeFalseTrue  { private get; set; }
+        [SerializeProperty(true, false)]  protected int ProtectedPrivateGetterAttributeTrueFalse  { private get; set; }
+        [SerializeProperty(false, false)] protected int ProtectedPrivateGetterAttributeFalseFalse { private get; set; }
+
+        [SerializeProperty]               private int PrivateAttribute           { get; set; }
+        [SerializeProperty(true, true)]   private int PrivateAttributeTrueTrue   { get; set; }
+        [SerializeProperty(false, true)]  private int PrivateAttributeFalseTrue  { get; set; }
+        [SerializeProperty(true, false)]  private int PrivateAttributeTrueFalse  { get; set; }
+        [SerializeProperty(false, false)] private int PrivateAttributeFalseFalse { get; set; }
 
 
         private int _min0 = 0;
@@ -85,5 +97,8 @@ namespace SerializePropertyEditing
         public int DefaultIs51 { get; set; } = 51;
 
         public Vector2 Vector2 { get; set; }
+        public GameObject GameObjectField { get; set; }
+        public SerializePropertyTest MonoBehavourField { get; set; }
+        public GameObject SomePrefab { get; set; }
     }
 }

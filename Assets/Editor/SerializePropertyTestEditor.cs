@@ -1,9 +1,9 @@
 using UnityEngine;
 using UnityEditor;
 
-namespace SerializePropertyEditing
+namespace SerializePropertyEditing.Test
 {
-    [CustomEditor(typeof(SerializePropertyTest))]
+    [CustomEditor(typeof(SerializePropertyTest)), CanEditMultipleObjects]
     public class SerializePropertyTestEditor : SerializePropertyEditor
     {
 

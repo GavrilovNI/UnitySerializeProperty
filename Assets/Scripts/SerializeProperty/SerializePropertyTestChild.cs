@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace SerializePropertyEditing
+namespace SerializePropertyEditing.Test
 {
     public class SerializePropertyTestChild : SerializePropertyTest
     {

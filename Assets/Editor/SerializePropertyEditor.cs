@@ -4,10 +4,11 @@ using UnityEditor;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
+using UnityEditor.SceneManagement;
 
 namespace SerializePropertyEditing
 {
-    public class PropertyInfoByNameComparer : IEqualityComparer<PropertyInfo>
+    public class PropertyInfoComparerByName : IEqualityComparer<PropertyInfo>
     {
         public bool Equals(PropertyInfo a, PropertyInfo b)
         {
@@ -56,7 +57,7 @@ namespace SerializePropertyEditing
 
             var monoBehaviorMembers = typeof(MonoBehaviour).GetProperties(instanceFieldsAndProperties);
 
-            PropertyInfoByNameComparer comparer = new PropertyInfoByNameComparer();
+            PropertyInfoComparerByName comparer = new PropertyInfoComparerByName();
             var localMembers = type.GetProperties(instanceFieldsAndProperties | BindingFlags.DeclaredOnly).ToList();
             var parentMembers = type.GetProperties(instanceFieldsAndProperties)
                                        .Except(monoBehaviorMembers, comparer)
@@ -78,39 +79,43 @@ namespace SerializePropertyEditing
 
         public static bool IsGetterSerializable(PropertyInfo propertyInfo)
         {
-            return propertyInfo.GetMethod != null &&
-                   Attribute.IsDefined(propertyInfo, typeof(NotSerializeGetterAttribute)) == false &&
-                   Attribute.IsDefined(propertyInfo, typeof(NotSerializePropertyAttribute)) == false &&
-                   (propertyInfo.GetMethod.IsPrivate == false ||
-                   Attribute.IsDefined(propertyInfo, typeof(SerializeGetterAttribute)) ||
-                   Attribute.IsDefined(propertyInfo, typeof(SerializePropertyAttribute)));
+            SerializePropertyAttribute attribute = (SerializePropertyAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(SerializePropertyAttribute));
+            return propertyInfo.GetMethod != null && (attribute == null ? propertyInfo.GetMethod.IsPrivate == false : attribute.SerializeGetter);
         }
         public static bool IsSetterSerializable(PropertyInfo propertyInfo)
         {
-            return propertyInfo.SetMethod != null &&
-                   Attribute.IsDefined(propertyInfo, typeof(NotSerializeSetterAttribute)) == false &&
-                   Attribute.IsDefined(propertyInfo, typeof(NotSerializePropertyAttribute)) == false &&
-                   (propertyInfo.SetMethod.IsPrivate == false ||
-                   Attribute.IsDefined(propertyInfo, typeof(SerializeSetterAttribute)) ||
-                   Attribute.IsDefined(propertyInfo, typeof(SerializePropertyAttribute)));
+            SerializePropertyAttribute attribute = (SerializePropertyAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(SerializePropertyAttribute));
+            return propertyInfo.SetMethod != null && (attribute == null ? propertyInfo.SetMethod.IsPrivate == false : attribute.SerializeSetter);
         }
+
+        public static bool AllowSceneObjectByLabel(string label) =>
+            label.EndsWith("prefab", StringComparison.InvariantCultureIgnoreCase) == false;
 
         public static object DrawInspectorField(Type type, string label, object value, params GUILayoutOption[] options)
         {
             string typeName;
-            if(type == typeof(Int32))
-                typeName = "Int";
+
+            if(type.IsSubclassOf(typeof(UnityEngine.Object)))
+            {
+                bool allowSceneObjects = AllowSceneObjectByLabel(label);
+                return EditorGUILayout.ObjectField(label, (UnityEngine.Object)value, type, allowSceneObjects, options);
+            }
             else
-                typeName = type.Name;
+            {
+                if(type == typeof(Int32))
+                    typeName = "Int";
+                else
+                    typeName = type.Name;
 
-            MethodInfo methodInfo = typeof(EditorGUILayout).GetMethod($"{typeName}Field", new Type[] { typeof(string), type, typeof(GUILayoutOption[]) });
+                MethodInfo methodInfo = typeof(EditorGUILayout).GetMethod($"{typeName}Field", new Type[] { typeof(string), type, typeof(GUILayoutOption[]) });
 
-            bool found = (methodInfo is null) == false && methodInfo.ReturnType == type;
+                bool found = (methodInfo is null) == false && methodInfo.ReturnType == type;
 
-            if(found == false)
-                throw new NotImplementedException($"Can't draw field for type {type.Name}");
+                if(found == false)
+                    throw new NotImplementedException($"Can't draw field for type {type.Name}");
 
-            return methodInfo.Invoke(null, new object[] { label, value, options });
+                return methodInfo.Invoke(null, new object[] { label, value, options });
+            }
         }
 
         public static T DrawInspectorField<T>(string label, T value, params GUILayoutOption[] options)
@@ -119,17 +124,21 @@ namespace SerializePropertyEditing
             return (T)DrawInspectorField(type, label, value, options);
         }
 
+        public static string PropertyNameToLabel(string name)
+        {
+            return string.Concat(name.Select(c => char.IsUpper(c) ? $" {c}" : c.ToString())).TrimStart(' ');
+        }
+
         public static void DrawProperty(object target, PropertyInfo property)
         {
             if(IsGetterSerializable(property) == false)
                 return;
             Type propertyType = property.PropertyType;
-            string propertyName = property.Name;
+            string label = PropertyNameToLabel(property.Name);
 
             bool canSet = IsSetterSerializable(property);
-
             EditorGUI.BeginDisabledGroup(canSet == false);
-            object result = DrawInspectorField(propertyType, propertyName, property.GetValue(target));
+            object result = DrawInspectorField(propertyType, label, property.GetValue(target));
             EditorGUI.EndDisabledGroup();
 
             if(canSet)
@@ -155,6 +164,8 @@ namespace SerializePropertyEditing
             {
                 DrawProperty(target, propertyInfo);
             }
+            EditorUtility.SetDirty(target);
+            EditorSceneManager.MarkSceneDirty(((MonoBehaviour)target).gameObject.scene);
             serializedObject.ApplyModifiedProperties();
         }
 
